@@ -1,0 +1,12 @@
+[root]
+name = "i18n-rs"
+version = "0.1.0"
+dependencies = [
+ "yaml-rust 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "yaml-rust"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
