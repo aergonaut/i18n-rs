@@ -1,3 +1,5 @@
+//! Naive Rust implementation of a flattened Hash constructed from a nested YAML document
+
 use std::collections::BTreeMap;
 use std::io::prelude::*;
 use std::fs::File;
@@ -6,12 +8,14 @@ use yaml_rust::{Yaml, YamlLoader};
 
 use errors::{Error, Result};
 
+/// A `Backend` allows accessing the values of a nested YAML hash with dotted-path keys
 #[derive(Debug, PartialEq)]
 pub struct Backend {
     database: BTreeMap<String, String>
 }
 
 impl Backend {
+    /// Create a new `Backend` from a `Path`
     pub fn from_path<P: AsRef<Path>>(path: P) -> Result<Backend> {
         let mut file = try!(File::open(path));
         let mut buf = String::new();
@@ -20,8 +24,10 @@ impl Backend {
         Backend::from_str(&buf)
     }
 
+    /// Create a new `Backend` from a `&str`
     pub fn from_str(buf: &str) -> Result<Backend> {
-        let decoded_yaml = &YamlLoader::load_from_str(&buf)?[0];
+        let docs = try!(YamlLoader::load_from_str(&buf));
+        let decoded_yaml = &docs[0];
 
         if let Some(yaml_hash) = decoded_yaml.as_hash() {
             let database = try!(flatten_nested_yaml_hash(yaml_hash));
@@ -29,6 +35,20 @@ impl Backend {
         }
 
         Err(Error::Other("Could not parse YAML document as Hash".to_string()))
+    }
+
+    /// Get the value at the dotted-path `key`
+    ///
+    /// Returns `Some(val)` if the `key` exists in the `database`, `None` otherwise
+    pub fn get(&self, key: &String) -> Option<&String> {
+        self.database.get(key)
+    }
+
+    /// Set the dotted-path `key` to the given `val`
+    ///
+    /// Returns `Some(old_val)` if the `key` existed in the database, `None` if it did not
+    pub fn set(&mut self, key: String, val: String) -> Option<String> {
+        self.database.insert(key, val)
     }
 }
 
